@@ -1,0 +1,16 @@
+mysql_db=test
+mysql_host=localhost
+mysql_pass=boltcassie
+mysql_user=root
+postgres_db=test
+postgres_host=localhost
+postgres_pass=test
+postgres_user=test
+sqlserver_db=test
+sqlserver_host=localhost\SQLEXPRESS
+sqlserver_pass=test
+sqlserver_user=test
+oracle_db=XE
+oracle_host=localhost
+oracle_pass=test
+oracle_user=TEST

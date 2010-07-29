@@ -1,0 +1,8 @@
+TODO list for Perl module Cosmic::DB
+
+- Writes tests for SQL.pm & DB.pm
+- More functionality to SQL.pm
+- Possibly include DB2???
+
+
+

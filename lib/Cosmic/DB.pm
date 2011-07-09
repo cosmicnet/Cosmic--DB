@@ -31,6 +31,10 @@ Cosmic::DB - Lightweight SQL generation, portable across Oracle, MySQL, Postgres
 
 =head1 DESCRIPTION
 
+DEVELOPMENT RELEASE - Don't use this, like Magnum it's nowhere near ready.
+
+(Yes that was a Zoolander reference)
+
 This module acts as a gateway to L<Cosmic::DB::Schema> and L<Cosmic::DB::SQL>,
 providing some additional convenient functionality.
 

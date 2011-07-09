@@ -6,8 +6,9 @@ use Cosmic::DB::SQL::Placeholder;
 
 sub new {
     my $class = shift;
-    croak( 'Need DBI object' ) unless ref $_[0] eq 'DBI';
-    my $self = bless { sql => '', dbh => $_[0] }, $class;
+    my ( $dbh ) = @_;
+    croak( 'No database handle passed...' ) unless ref( $dbh ) eq 'DBI::db';
+    my $self = bless { sql => '', dbh => $dbh }, $class;
     return $self;
 }
 
@@ -58,15 +59,20 @@ sub conditional {
 
 sub insert {
     my $self = shift;
-    croak( 'Missing table from insert' ) unless defined $_[0];
-    croak( 'Missing columns from insert' ) unless ref $_[1] eq 'ARRAY';
-    croak( 'Missing values from insert' ) unless $_[2];
+    my ( $table, $columns, $values ) = @_;
+    croak( 'Missing table from insert' ) unless defined $table;
+    croak( 'Missing columns from insert' ) unless ref $columns eq 'ARRAY';
+    croak( 'Missing values from insert' ) unless $values;
     # Populate list of placeholders
-    if ( $_[2] eq '?' ) {
-        $_[2] = [ map { new 'Cosmic::DB::SQL::Placeholder' } @$_[1] ];
+    if ( $values eq '?' ) {
+        $values = [ map { 'Cosmic::DB::SQL::Placeholder'->new } @$columns ];
+        #$_[2] = [];
+        #while (@$_[1]) {
+        #    push()
+        #}
     }#if
-    $self->{sql} .= 'INSERT INTO ' . $self->_quote_table($_[0]) . ' (' . join(',', map { $self->_quote_column($_) } @$_[1]) . ') ';
-    $self->{sql} .= 'VALUES (' . join(',', map { $self->_quote_value($_) } @$_[2]) . ') ';
+    $self->{sql} .= 'INSERT INTO ' . $self->_quote_table($table) . ' (' . join(',', map { $self->_quote_column($_) } @$columns) . ') ';
+    $self->{sql} .= 'VALUES (' . join(',', map { $self->_quote_value($_) } @$values) . ') ';
     return $self;
 }#sub
 

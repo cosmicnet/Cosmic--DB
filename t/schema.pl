@@ -337,4 +337,60 @@ our $schema_constraints = {
 };
 
 
+## Cosmic::DB::SQL sample schema
+
+# Sample schema with multiple types
+our $schema_sample = {
+    test_sample => {
+        columns => [
+            {
+                name    => 'col_smallint',
+                type    => 'smallint',
+            },
+            {
+                name    => 'col_int',
+                type    => 'int',
+            },
+            {
+                name    => 'col_bigint',
+                type    => 'bigint',
+            },
+            {
+                name    => 'col_real',
+                type    => 'real',
+            },
+            {
+                name    => 'col_double',
+                type    => 'double',
+            },
+            {
+                name    => 'col_char',
+                type    => 'char',
+            },
+            {
+                name    => 'col_varchar',
+                type    => 'varchar',
+            },
+            {
+                name    => 'col_text',
+                type    => 'text',
+            },
+            {
+                name    => 'col_date',
+                type    => 'date',
+            },
+            {
+                name    => 'col_time',
+                type    => 'time',
+            },
+            {
+                name    => 'col_timestamp',
+                type    => 'timestamp',
+            },
+        ],
+    },
+};
+
+
+
 1;

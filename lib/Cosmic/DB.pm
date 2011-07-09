@@ -4,10 +4,19 @@ use warnings;
 use Carp;
 use DBI;
 
+use Cosmic::DB::SQL;
+
 BEGIN {
     use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-    $VERSION     = '0.01';
+    $VERSION     = '0.01_01';
 }#BEGIN
+
+my %params_default = (
+    prefix => '',
+    suffix => '',
+    debug => 0,
+    debug_newline => "\n",
+);
 
 
 =head1 NAME
@@ -64,7 +73,10 @@ See Also  : L<DBI>
 
 sub new {
     my $class = shift;
-    my %params = @_;
+    my %params = (
+        %params_default,
+        @_
+    );
     my %attrs = $params{attrs} ? %{ $params{attrs} } : ( AutoCommit => 1 );
     delete $params{attrs};
     if ( ref ($class) ) {
@@ -114,7 +126,7 @@ sub connect {
             $self->{connected} = 1;
         }#else
         # Create SQL generation object
-        $self->{sql} = new JustWork::DB::SQL($self->{dbh});
+        $self->{sql} = new Cosmic::DB::SQL($self->{dbh});
     }#unless
     return $self->{connected};
 }#sub
@@ -139,83 +151,81 @@ sub disconnect {
 
 Usage
 
-    $db->insert( $table, \@columns, \@data );
-    $db->insert( $table, \@columns, \%data );
-    $db->insert( $table, \%data );
-    $db->insert( $table, \@columns, [ \@data, \@data, ... ] );
-    $db->insert( $table, \@columns, [ \%data, \%data, ... ] );
-    $db->insert( $table, [ \%data, \%data, ... ] );
+    $db->insert( $table, \@columns, \@values );
+    $db->insert( $table, \@columns, \%values );
+    $db->insert( $table, \%values );
+    $db->insert( $table, \@columns, [ \@values, \@values, ... ] );
+    $db->insert( $table, \@columns, [ \%values, \%values, ... ] );
+    $db->insert( $table, [ \%values, \%values, ... ] );
 
-Purpose   : Inserts \@data into the \@columns of $table
+Purpose   : Inserts \@values into the \@columns of $table
 Parameters:
 
 =over
 
     $table = STRING - name of the table
     \@columns = LIST - array reference to column names
-    \@data = LIST - array reference to values
-    \%data = HASH - hash reference to values keyed by column names
+    \@values = LIST - array reference to values
+    \%values = HASH - hash reference to values keyed by column names
 
 =back
 
 Uses do for single inserts, or prepare and a loop for multiple. If columns is
-ommitted and %data is a hash (or arrary ref of hashes) then the hash keys are
-used as the columns. If %data is a hash and columns is passed, then other hash
+ommitted and %values is a hash (or arrary ref of hashes) then the hash keys are
+used as the columns. If %values is a hash and columns is passed, then other hash
 keys are ignored.
 
 =cut
 
 sub insert {
-    my ( $self, $table, $columns, $data ) = @_;
+    my ( $self, $table, $columns, $values ) = @_;
     $self->{success} = 0;
     $table = "$self->{param}->{prefix}$table$self->{param}->{suffix}";
 
-    # See if columns is actually data and columns need to be generated
+    # See if columns is actually values and columns need to be generated
     if ( ref( $columns ) eq 'HASH' ) {
-        $data = $columns;
-        $columns = [ keys %$data ];
+        $values = $columns;
+        $columns = [ keys %$values ];
     }#if
     if ( ref( $columns ) eq 'ARRAY' && ref( $columns->[0] ) eq 'HASH' ) {
-        $data = $columns;
-        $columns = [ keys %{ $data->[0] } ];
+        $values = $columns;
+        $columns = [ keys %{ $values->[0] } ];
     }#if
 
-    # Create values for insert
-    my $values = [];
-    if ( ref( $data ) eq 'ARRAY' ) {
-        $values = $data;
-    }#if
-    elsif ( ref( $data ) eq 'HASH' ) {
+    # Generate values if needed
+    if ( ref( $values ) eq 'HASH' ) {
+        my @vals;
         foreach my $column (@$columns) {
-            push( @$values, $data->{$column} );
+            push( @vals, $values->{$column} );
         }#foreach
+        $values = \@vals;
     }#else
 
     # Check for multiple insert
     if ( ref( $values->[0] ) ) {
-        my $sql = $self->{sql}->sql->insert($table, @$columns, '?')->sql;
+        my $sql = $self->{sql}->sql->insert( $table, $columns, '?' )->sql;
         my $sth = $self->{dbh}->prepare($sql);
         if ( ref( $values->[0] ) eq 'ARRAY' ) {
-            foreach my $values ( @$data ) {
-                $sth->execute(@$values) && {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql VALUES = @$values\n $DBI::errstr\n");
+            foreach my $values ( @$values ) {
+                $sth->execute(@$values) && do {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql VALUES = @$values\n $DBI::errstr\n");
                 carp "SQL $sql VALUES @$values$self->{param}->{debug_newline}" if $self->{param}->{debug};
             }#foreach
         }#if
-        elsif ( ref( $data->[0] ) eq 'HASH' ) {
-            foreach my $valuehash ( @$data ) {
+        elsif ( ref( $values->[0] ) eq 'HASH' ) {
+            foreach my $valuehash ( @$values ) {
                 my @values;
                 foreach my $column (@$columns) {
                     push( @values, $valuehash->{$column} );
                 }#foreach
-                $sth->execute(@values) && {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql VALUES = @values\n $DBI::errstr\n");
+                $sth->execute(@values) && do {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql VALUES = @values\n $DBI::errstr\n");
                 carp "SQL $sql VALUES @$values$self->{param}->{debug_newline}" if $self->{param}->{debug};
             }#foreach
         }#else
         $sth->finish();
     }#if
     else {
-        my $sql = $self->{sql}->sql->insert($table, @$columns, @$values)->sql;
-        $self->{dbh}->do($sql) && {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql\n $DBI::errstr\n");
+        my $sql = $self->{sql}->sql->insert($table, $columns, $values)->sql;
+        $self->{dbh}->do($sql) && do {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql\n $DBI::errstr\n");
         carp "SQL $sql $self->{param}->{debug_newline}" if $self->{param}->{debug};
     }#else
     return $self->{success};

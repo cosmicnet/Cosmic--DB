@@ -8,7 +8,7 @@ use Cosmic::DB::SQL;
 
 BEGIN {
     use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-    $VERSION     = '0.01_01';
+    $VERSION     = '0.01_02';
 }#BEGIN
 
 my %params_default = (
@@ -99,6 +99,8 @@ sub new {
         attrs => \%attrs,
     };
     bless ($self, ref ($class) || $class);
+    # Connect if we are passed DBH
+    $self->connect( $params{dbh} ) if $params{dbh};
     return $self;
 }#new
 

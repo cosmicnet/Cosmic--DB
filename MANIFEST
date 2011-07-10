@@ -12,8 +12,15 @@ lib/Cosmic/DB/Schema/MySQL.pm
 lib/Cosmic/DB/Schema/Oracle.pm
 lib/Cosmic/DB/Schema/Postgres.pm
 lib/Cosmic/DB/Schema/SQLServer.pm
+lib/Cosmic/DB/SQL/MySQL.pm
+lib/Cosmic/DB/SQL/Oracle.pm
+lib/Cosmic/DB/SQL/Postgres.pm
+lib/Cosmic/DB/SQL/SQLServer.pm
 lib/Cosmic/DB/SQL/Generic.pm
 lib/Cosmic/DB/SQL/Placeholder.pm
 t/001_load.t
 t/020_schema.t
-schema.pl
+t/030_sql.t
+t/040_cosmic.t
+t/schema.pl
+t/dbinfo

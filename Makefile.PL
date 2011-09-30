@@ -59,7 +59,9 @@ WriteMakefile(
     AUTHOR       => 'Lyle Hopkins (cosmicnet@cpan.org)',
     ABSTRACT     => 'Lightweight SQL generation, portable across Oracle, MySQL, Postgres & SQL Server',
     PREREQ_PM    => {
-        'Test::Simple' => 0.44,
-        'DBI'          => 0,
+        'Test::Simple'  => 0.44,
+        'DBI'           => 0,
+		'Test::More'	=> 0,
+		'Test::Deep'	=> 0,
     },
 );

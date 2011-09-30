@@ -383,6 +383,72 @@ while ( my ( $db, $details ) = each %db_list ) {
         ];
         cmp_deeply( $db_returned, $db_expected, 'DB contents after insert' );
 
+        #$db->insert( $table, [ 'column_a', { name => 'column_b', value => 1 } ], [ \%data, ... ] );
+        $dbh->do( 'TRUNCATE test_sample' );
+        $dbh->do( 'DROP TABLE test_rel' );
+        $dbh->do( 'CREATE TABLE test_rel ( a int, b int )' );
+        ok( $db->insert( 'test_rel', [ 'a', { name => 'b', value => 1 } ], [ [0], [1] ] ), 'Fixed value column insert ok' );
+        $db_returned = $dbh->selectall_arrayref(qq~SELECT * FROM `test_rel`~, { Slice => {} });
+        #diag( Dumper($db_returned) );
+        $db_expected = [
+            {
+                'a' => '0',
+                'b' => '1',
+            },
+            {
+                'a' => '1',
+                'b' => '1',
+            },
+        ];
+        cmp_deeply( $db_returned, $db_expected, 'DB contents after insert' );
+
+        #$db->insert( $table, [ 'column_a', 'column_b' ], [ $scalar, \@data ] );
+        $dbh->do( 'TRUNCATE test_rel' );
+        ok( $db->insert( 'test_rel', [ 'a', 'b' ], [ 0, [ 1, 2, 3 ] ] ), 'Fixed value, multiple relationship insert ok' );
+#        ok( $db->insert( 'test_rel', [ 'a', { name => 'b', value => 1 } ], [ [ 0, 1, 2, 3 ] ] ), 'Fixed value column insert ok' );
+        $db_returned = $dbh->selectall_arrayref(qq~SELECT * FROM `test_rel`~, { Slice => {} });
+        #diag( Dumper($db_returned) );
+        $db_expected = [
+            {
+                'a' => '0',
+                'b' => '1',
+            },
+            {
+                'a' => '0',
+                'b' => '2',
+            },
+            {
+                'a' => '0',
+                'b' => '3',
+            }
+        ];
+        cmp_deeply( $db_returned, $db_expected, 'DB contents after insert' );
+
+        #$db->insert( $table, [ 'column_a', 'column_b' ], [ $scalar, \@data ] );
+        $dbh->do( 'TRUNCATE test_rel' );
+        ok( $db->insert( 'test_rel', [ 'a', { name => 'b', value => 1 } ], [ [ 0, 1, 2, 3 ] ] ), 'Fixed value column, multiple relationship insert ok' );
+        $db_returned = $dbh->selectall_arrayref(qq~SELECT * FROM `test_rel` ORDER BY a, b~, { Slice => {} });
+        #diag( Dumper($db_returned) );
+        $db_expected = [
+            {
+                'a' => '0',
+                'b' => '1',
+            },
+            {
+                'a' => '1',
+                'b' => '1',
+            },
+            {
+                'a' => '2',
+                'b' => '1',
+            },
+            {
+                'a' => '3',
+                'b' => '1',
+            }
+        ];
+        cmp_deeply( $db_returned, $db_expected, 'DB contents after insert' );
+
         #diag( $sql );
         #
         #

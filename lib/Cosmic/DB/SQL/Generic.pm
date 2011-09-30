@@ -65,14 +65,19 @@ sub insert {
     croak( 'Missing values from insert' ) unless $values;
     # Populate list of placeholders
     if ( $values eq '?' ) {
-        $values = [ map { 'Cosmic::DB::SQL::Placeholder'->new } @$columns ];
-        #$_[2] = [];
-        #while (@$_[1]) {
-        #    push()
-        #}
+        #$values = [ map { Cosmic::DB::SQL::Placeholder->new } @$columns ];
+        $values = [ map { \'?' } @$columns ];
     }#if
+    #else {
+    #    # Check values for placeholders
+    #    foreach ( @values ) {
+    #        if ( ref $_ eq 'SCALAR' && $$_ eq '?' ) {
+    #            $_ = Cosmic::DB::SQL::Placeholder->new;
+    #        }
+    #    }
+    #}
     $self->{sql} .= 'INSERT INTO ' . $self->_quote_table($table) . ' (' . join(',', map { $self->_quote_column($_) } @$columns) . ') ';
-    $self->{sql} .= 'VALUES (' . join(',', map { $self->_quote_value($_) } @$values) . ') ';
+    $self->{sql} .= 'VALUES (' . join(',', map { ref $_ ? $$_ : $self->_quote_value($_) } @$values) . ') ';
     return $self;
 }#sub
 

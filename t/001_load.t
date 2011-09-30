@@ -12,7 +12,7 @@ BEGIN {
 
 my $object = Cosmic::DB->new ();
 isa_ok ($object, 'Cosmic::DB', 'Cosmic::DB Object created');
-$object = Cosmic::DB::SQL->new ();
+$object = Cosmic::DB::SQL->new ( bless {}, 'DBI::db' ); # Fake dbh
 isa_ok ($object, 'Cosmic::DB::SQL', 'Cosmic::DB::SQL Object created');
-$object = Cosmic::DB::Schema->new ();
+$object = Cosmic::DB::Schema->new ( bless {}, 'DBI::db' ); # Fake dbh
 isa_ok ($object, 'Cosmic::DB::Schema', 'Cosmic::DB::Schema Object created');

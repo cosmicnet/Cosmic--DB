@@ -188,15 +188,44 @@ sub insert {
     $self->{success} = 0;
     $table = "$self->{param}->{prefix}$table$self->{param}->{suffix}";
 
+    my $sql_values = '?';
+    my $columns_values;
+
     # See if columns is actually values and columns need to be generated
     if ( ref( $columns ) eq 'HASH' ) {
         $values = $columns;
         $columns = [ keys %$values ];
     }#if
-    if ( ref( $columns ) eq 'ARRAY' && ref( $columns->[0] ) eq 'HASH' ) {
+    elsif ( ref( $columns ) eq 'ARRAY' && !defined $values && ref( $columns->[0] ) eq 'HASH' ) {
         $values = $columns;
         $columns = [ keys %{ $values->[0] } ];
-    }#if
+    }#elsif
+    else {
+        # Is this a relationship table insert with 1 fixed ID?
+        if ( ref $values eq 'ARRAY' && ! ref $values->[0] && ref $values->[1] eq 'ARRAY' ) {
+            # Make 1st column fixed, take off value
+            $columns->[0] = {
+                name  => $columns->[0],
+                value => shift( @$values ),
+            };
+        }#elsif
+        # We have columns, look for fixed values
+        for( my $i = 0; $i <= $#$columns; $i++ ) {
+            if ( ref $columns->[$i] ) {
+                unless ( ref $sql_values ) {
+                    $sql_values = [];
+                    push( @$sql_values, \'?' ) for 0..$i-1;
+                }
+                push( @$sql_values, $columns->[$i]->{value} );
+                $columns->[$i] = $columns->[$i]->{name};
+            }
+            elsif ( ref $sql_values ) {
+                push( @$sql_values, \'?' );
+            }
+        }#for
+        $columns_values = grep { ! ref $_ } @$sql_values if ref $sql_values;
+    }#else
+    $columns_values ||= @$columns;
 
     # Generate values if needed
     if ( ref( $values ) eq 'HASH' ) {
@@ -209,13 +238,22 @@ sub insert {
 
     # Check for multiple insert
     if ( ref( $values->[0] ) ) {
-        my $sql = $self->{sql}->sql->insert( $table, $columns, '?' )->sql;
+        my $sql = $self->{sql}->sql->insert( $table, $columns, $sql_values )->sql;
         my $sth = $self->{dbh}->prepare($sql);
         if ( ref( $values->[0] ) eq 'ARRAY' ) {
-            foreach my $values ( @$values ) {
-                $sth->execute(@$values) && do {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql VALUES = @$values\n $DBI::errstr\n");
-                carp "SQL $sql VALUES @$values$self->{param}->{debug_newline}" if $self->{param}->{debug};
-            }#foreach
+            # Is this a relationship table insert with 1 fixed ID?
+            if ( @$values == 1 && @{ $values->[0] } > $columns_values ) {
+                foreach my $value ( @{ $values->[0] } ) {
+                    $sth->execute($value) && do {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql VALUES = $value\n $DBI::errstr\n");
+                    carp "SQL $sql VALUES $value$self->{param}->{debug_newline}" if $self->{param}->{debug};
+                }#foreach
+            }#if
+            else {
+                foreach my $values ( @$values ) {
+                    $sth->execute(@$values) && do {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql VALUES = @$values\n $DBI::errstr\n");
+                    carp "SQL $sql VALUES @$values$self->{param}->{debug_newline}" if $self->{param}->{debug};
+                }#foreach
+            }#else
         }#if
         elsif ( ref( $values->[0] ) eq 'HASH' ) {
             foreach my $valuehash ( @$values ) {

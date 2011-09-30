@@ -1,6 +1,7 @@
 package Cosmic::DB::SQL;
 use strict;
 use warnings;
+use Carp;
 
 =pod
 

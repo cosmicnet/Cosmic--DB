@@ -1,7 +1,10 @@
-mysql_db=test
-mysql_host=localhost
-mysql_pass=test
-mysql_user=test
+# This is example config only
+# All lined are commented so tests againt these DBs will not run
+# Edit the t/dbinfo file directly or enter details using the prompt below
+#mysql_db=test
+#mysql_host=localhost
+#mysql_pass=test
+#mysql_user=test
 #postgres_db=test
 #postgres_host=localhost
 #postgres_pass=test

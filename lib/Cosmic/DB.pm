@@ -8,7 +8,7 @@ use Cosmic::DB::SQL;
 
 BEGIN {
     use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-    $VERSION     = '0.01_03';
+    $VERSION     = '0.01_04';
 }#BEGIN
 
 my %params_default = (

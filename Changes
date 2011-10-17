@@ -11,3 +11,6 @@ Revision history for Perl module Cosmic::DB
     - Added deps to Makefile.PL
     - Updated test DB info, hopefully this will prevent all the fails we get
       from CPAN testers that don't read the prompts
+
+0.01_4 Monday Sep 17
+    - Added merge_replace SQL method

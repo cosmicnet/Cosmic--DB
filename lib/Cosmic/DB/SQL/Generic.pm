@@ -77,7 +77,12 @@ sub insert {
     #    }
     #}
     $self->{sql} .= 'INSERT INTO ' . $self->_quote_table($table) . ' (' . join(',', map { $self->_quote_column($_) } @$columns) . ') ';
-    $self->{sql} .= 'VALUES (' . join(',', map { ref $_ ? $$_ : $self->_quote_value($_) } @$values) . ') ';
+    if ( ref $values eq 'ARRAY' ) {
+        $self->{sql} .= 'VALUES (' . join(',', map { $self->_quote_value($_) } @$values) . ') ';
+    }
+    else {
+        $self->{sql} .= $values;
+    }
     return $self;
 }#sub
 
@@ -115,8 +120,13 @@ sub assignment {
 
 sub _quote_value {
     my $self = shift;
-    if ( ref $_[0] eq 'Cosmic::DB::SQL::Placeholder' ) {
-        return '?';
+    if ( ref $_[0] ) {
+        if ( ref $_[0] eq 'Cosmic::DB::SQL::Placeholder' ) {
+            return '?';
+        }
+        else {
+            return $$_[0];
+        }
     }#if
     else {
         return $self->{dbh}->quote($_[0]);

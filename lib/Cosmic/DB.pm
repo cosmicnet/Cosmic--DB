@@ -184,8 +184,18 @@ keys are ignored.
 =cut
 
 sub insert {
-    my ( $self, $table, $columns, $values ) = @_;
+    my $self = shift;
+    my ( $table, $columns, $values ) = @_;
     $self->{success} = 0;
+
+    my $insert_method = 'insert';
+    # Is table actually config?
+    my $config;
+    if ( ref $table ) {
+        $config = $table;
+        $table = $config->{table};
+        $insert_method = 'merge_replace' if $config->{replace};
+    }
     $table = "$self->{param}->{prefix}$table$self->{param}->{suffix}";
 
     my $sql_values = '?';
@@ -225,7 +235,7 @@ sub insert {
         }#for
         $columns_values = grep { ! ref $_ } @$sql_values if ref $sql_values;
     }#else
-    $columns_values ||= @$columns;
+    $columns_values ||= @$columns; # Columns with values
 
     # Generate values if needed
     if ( ref( $values ) eq 'HASH' ) {
@@ -237,8 +247,8 @@ sub insert {
     }#else
 
     # Check for multiple insert
-    if ( ref( $values->[0] ) ) {
-        my $sql = $self->{sql}->sql->insert( $table, $columns, $sql_values )->sql;
+    if ( ref $values && ref( $values->[0] ) ) {
+        my $sql = $self->{sql}->sql->$insert_method( $table, $columns, $sql_values )->sql;
         my $sth = $self->{dbh}->prepare($sql);
         if ( ref( $values->[0] ) eq 'ARRAY' ) {
             # Is this a relationship table insert with 1 fixed ID?
@@ -268,7 +278,7 @@ sub insert {
         $sth->finish();
     }#if
     else {
-        my $sql = $self->{sql}->sql->insert($table, $columns, $values)->sql;
+        my $sql = $self->{sql}->sql->$insert_method($table, $columns, $values)->sql;
         $self->{dbh}->do($sql) && do {$self->{success} = 1} || croak("Cannot insert to $table: SQL = $sql\n $DBI::errstr\n");
         carp "SQL $sql $self->{param}->{debug_newline}" if $self->{param}->{debug};
     }#else

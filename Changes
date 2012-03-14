@@ -14,3 +14,6 @@ Revision history for Perl module Cosmic::DB
 
 0.01_4 Monday Sep 17
     - Added merge_replace SQL method
+
+0.01_5 Wednesday Mar 14
+    - Fixed bug in value quoting when passed as scalar reference

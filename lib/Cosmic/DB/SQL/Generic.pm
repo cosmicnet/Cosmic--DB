@@ -125,7 +125,7 @@ sub _quote_value {
             return '?';
         }
         else {
-            return $$_[0];
+            return ${$_[0]};
         }
     }#if
     else {

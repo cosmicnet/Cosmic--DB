@@ -1,1 +1,6 @@
 Makefile
+blib
+pm_to_blib
+Cosmic-DB-*.tar
+Cosmic-DB-*.tar.gz
+Cosmic-DB-*.tar.gz.bak
